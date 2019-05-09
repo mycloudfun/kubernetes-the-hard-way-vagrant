@@ -36,7 +36,7 @@ Follow the original ones from:
 
 [2. Installing the Client Tools](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/02-client-tools.md)
 
-### Steps 03
+### Step 03 - Provisioning Compute Resources
 
 In order to provision the required resources, clone this repository and run below command in main directory:
 
@@ -46,7 +46,7 @@ vagrant up
 
 This will provision 6 VM's on your Virtualbox: 3 Masters, 2 Workers and 1 Nginx Load Balander.
 
-### Step 04
+### Step 04 - Provisioning a CA and Generating TLS Certificates
 
 Run the **setup.sh** script in scripts/certs folder to create all the required certificates. Make sure you run this script from the certs folder.
 
@@ -65,7 +65,9 @@ Worker instances:
 
 ```bash
 for instance in worker1 worker2; do
-  vagrant scp ca.pem ${instance}-key.pem ${instance}.pem ${instance}:~/
+  vagrant scp ca.pem ${instance}:~/
+  vagrant scp ${instance}-key.pem ${instance}:~/
+  vagrant scp ${instance}.pem ${instance}:~/
 done
 ```
 
@@ -73,8 +75,58 @@ Master instances:
 
 ```bash
 for instance in master1 master2 master3; do
-  vagrant scp ca.pem ca-key.pem kubernetes-key.pem kubernetes.pem \
-    service-account-key.pem service-account.pem ${instance}:~/
+  vagrant scp ca.pem ${instance}:~/
+  vagrant scp ca-key.pem ${instance}:~/
+  vagrant scp kubernetes-key.pem ${instance}:~/
+  vagrant scp kubernetes.pem ${instance}:~/
+  vagrant scp service-account-key.pem ${instance}:~/
+  vagrant scp service-account.pem ${instance}:~/
 done
 ```
+
+### Step 05 - Generating Kubernetes Configuration Files for Authentication
+
+Run the **setup.sh** script in scripts/kubeconfigs folder to create all the required configuration files. Make sure you run this scrip from the kubeconfigs folder
+
+```bash
+cd scripts/kubeconfigs
+./setup.sh
+```
+
+Next copy the produced files to Worker instances:
+
+```bash
+for instance in worker1 worker2; do
+  vagrant scp ${instance}.kubeconfig ${instance}:~/
+  vagrant scp kube-proxy.kubeconfig ${instance}:~/
+done
+```
+
+and Master instances:
+
+```bash
+for instance in master1 master2 master3; do
+  vagrant scp admin.kubeconfig ${instance}:~/
+  vagrant scp kube-controller-manager.kubeconfig ${instance}:~/
+  vagrant scp kube-scheduler.kubeconfig ${instance}:~/
+done
+```
+
+### Step 6 Generating the Data Encryption Config and Key
+
+Run the **setup.sh** script in scripts/encryption folder to create the encryption key and configuration. Make sure you run this scrip from the encryption folder
+
+```bash
+cd script/encryption
+./setup.sh
+```
+
+Next copy the produced files to Master instances:
+
+```bash
+for instance in master1 master2 master3; do
+  vagrant scp encryption-config.yaml ${instance}:~/
+done
+```
+
 
