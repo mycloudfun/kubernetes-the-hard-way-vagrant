@@ -2,6 +2,6 @@
 
 echo "Generate the encryption key"
 
-./01.Generate_The_Encryption_File.sh
+source/14.Generate_The_Encryption_File.sh
 
 echo "Encryption key generated"

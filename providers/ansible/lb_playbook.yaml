@@ -1,0 +1,75 @@
+---
+- name: "Load Balaner configuration"
+  hosts: lb
+  become: yes
+  gather_facts: true
+
+  tasks:
+
+  - name: "Setup /etc/hosts"
+    blockinfile:
+      path: /etc/hosts
+      block: |
+        10.0.0.10 lb lb.k8s.local
+        10.0.0.20 master1 master1.k8s.local
+        10.0.0.21 master2 master2.k8s.local
+        10.0.0.22 master3 master3.k8s.local
+        10.0.0.30 worker1 worker1.k8s.local
+        10.0.0.31 worker2 worker2.k8s.local
+
+  - name: "Set authorized key for user Vagrant"
+    authorized_key:
+      user: vagrant
+      state: present
+      key: "{{ lookup('file', '../../key.pub') }}"
+
+  - name: "Install required packages"
+    yum:
+      name: ['epel-release','policycoreutils-python']
+      state: latest
+      update_cache: yes
+
+  - name: "Install nginx"
+    yum:
+      name: nginx
+      state: latest
+      update_cache: yes
+
+  - name: "Nginx configuration file"
+    file:
+      path: /etc/nginx/conf.d/k8s.conf
+      owner: root
+      group: root
+      state: touch
+
+  - name: "Nginx configuration"
+    blockinfile:
+      path: /etc/nginx/conf.d/k8s.conf
+      block: |
+        upstream api.k8s.local {
+          server master1.k8s.local;
+          server master2.k8s.local;
+          server master3.k8s.local;
+        }
+
+        server {
+          listen 6443;
+          
+          location / {
+            proxy_pass https://api.k8s.local;
+          }
+        }
+
+  - name: "Allow Nginx to listen on TCP port 6443"
+    seport:
+      ports: 6443
+      proto: tcp
+      setype: http_port_t
+      state: present
+
+  - name: "Start and enable Nginx service"
+    service:
+      name: nginx
+      state: started
+      enabled: yes
+

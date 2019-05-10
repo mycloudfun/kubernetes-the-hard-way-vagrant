@@ -1,4 +1,4 @@
-# Kubernetes the hard way with vagrant
+# Kubernetes the hard way with Vagrant and Ansible
 
 This is a port of Kelsey Hightower project called [Kubernetes the hard way](https://github.com/kelseyhightower/kubernetes-the-hard-way), originally created for GCP. The aim of this project is to build a similar setup, but based on well-known product Vagrant. It allows you to build your own Kubernetes cluster for learning purposes without access to any public cloud provides. The only limit is your PC Hardware :)
 
@@ -22,6 +22,15 @@ This is a port of Kelsey Hightower project called [Kubernetes the hard way](http
 10.0.0.22 master3.k8s.local
 10.0.0.30 worker1.k8s.local
 10.0.0.31 worker2.k8s.local
+```
+* Private and public keys used later for ansible
+
+```bash
+./ssh_keys.sh
+
+#it will produce keys in main directory:
+key
+key.pub
 ```
 
 ## How to setup the cluster
@@ -48,11 +57,11 @@ This will provision 6 VM's on your Virtualbox: 3 Masters, 2 Workers and 1 Nginx 
 
 ### Step 04 - Provisioning a CA and Generating TLS Certificates
 
-Run the **setup.sh** script in scripts/certs folder to create all the required certificates. Make sure you run this script from the certs folder.
+Run the **setup_certs.sh** script in **scripts** folder to create all the required certificates. Make sure you run this script from the certs folder.
 
 ```bash
-cd scripts/certs
-./setup.sh
+cd scripts/
+./setup_certs.sh
 ```
 
 Next copy the produced certificates to master's and worker's nodes. I suggest you to use vagrant-scp plugin.
@@ -86,11 +95,10 @@ done
 
 ### Step 05 - Generating Kubernetes Configuration Files for Authentication
 
-Run the **setup.sh** script in scripts/kubeconfigs folder to create all the required configuration files. Make sure you run this scrip from the kubeconfigs folder
+Run the **setup_kubeconfigs.sh** script in **scripts** folder to create all the required configuration files. Make sure you run this scrip from the kubeconfigs folder
 
 ```bash
-cd scripts/kubeconfigs
-./setup.sh
+./setup_kubeconfigs.sh
 ```
 
 Next copy the produced files to Worker instances:
@@ -114,7 +122,7 @@ done
 
 ### Step 6 Generating the Data Encryption Config and Key
 
-Run the **setup.sh** script in scripts/encryption folder to create the encryption key and configuration. Make sure you run this scrip from the encryption folder
+Run the **setup_encryption.sh** script in **scripts** folder to create the encryption key and configuration. Make sure you run this scrip from the encryption folder
 
 ```bash
 cd script/encryption
@@ -129,4 +137,31 @@ for instance in master1 master2 master3; do
 done
 ```
 
+### Step 7 Bootstrapping the etcd Cluster
 
+IMPORTANT! Ansible playbook expects that desired files and certificates created in previous steps are available under **/home/vagrant** folder in nodes. Make sure you successfully completed it, otherwisei, the setup will fail.
+
+Start the ansible playbook to configure the ETCD cluster:
+
+```bash
+ansible-playbook ansible/playbook.yml -i ansible/inventory --key-file key
+```
+
+Above command will create ETCD cluster and start it. You can validate the status, by executing below command on one of the master nodes:
+
+```bash
+vagrant ssh master1
+sudo ETCDCTL_API=3 /usr/local/bin/etcdctl member list \
+  --endpoints=https://127.0.0.1:2379 \
+  --cacert=/etc/etcd/ca.pem \
+  --cert=/etc/etcd/kubernetes.pem \
+  --key=/etc/etcd/kubernetes-key.pem
+```
+
+It should produce the output similar to one below:
+
+```bash
+33d87194523dae28, started, master3, https://10.0.0.22:2380, https://10.0.0.22:2379
+49c039455b52a82e, started, master1, https://10.0.0.20:2380, https://10.0.0.20:2379
+d39138844daf67cb, started, master2, https://10.0.0.21:2380, https://10.0.0.21:2379
+```

@@ -1,0 +1,8 @@
+[masters]
+master1.k8s.local etcd_hostname=master1
+master2.k8s.local etcd_hostname=master2
+master3.k8s.local etcd_hostname=master3
+
+[workers]
+worker1.k8s.local
+worker2.k8s.local

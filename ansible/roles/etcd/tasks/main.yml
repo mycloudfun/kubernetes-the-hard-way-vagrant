@@ -1,0 +1,50 @@
+- name: "Download etcd package"
+  get_url:
+    url: "{{ etcd_package_url }}"
+    dest: /tmp
+
+- name: "Unpack the etcd files"
+  unarchive: 
+    src: "/tmp/{{ etcd_package_tar }}"
+    dest: /tmp
+    remote_src: yes
+
+- name: "Check if unpacked files exists"
+  stat:
+    path: "/tmp/{{ etcd_package }}"
+  register: etcd_files
+
+- name: "Move etcd binaries tp /usr/local/bin"
+  shell: "mv /tmp/{{ etcd_package }}/etcd* /usr/local/bin/"
+  when: etcd_files.stat.exists
+
+- name: "Create etcd directories"
+  file:
+    path: "{{ item }}"
+    owner: root
+    group: root
+    state: directory
+  with_items:
+    - /etc/etcd
+    - /var/lib/etcd
+
+- name: "Move certificates files to etcd folder"
+  shell: "mv /home/vagrant/ca.pem kubernetes-key.pem kubernetes.pem /etc/etcd/"
+  ignore_errors: yes
+
+- name: "Create etcd.service file"
+  template:
+    src: etcd.service
+    dest: /etc/systemd/system/etcd.service
+    owner: root
+    group: root
+
+- name: "Enable etcd service"
+  service:
+    name: etcd
+    enabled: true
+
+- name: "Start etcd service"
+  service:
+    name: etcd
+    state: restarted

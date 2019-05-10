@@ -1,1 +1,8 @@
 .vagrant
+*.pem
+*.json
+*.csr
+*.kubeconfig
+encryption-config.yaml
+key
+key.pub

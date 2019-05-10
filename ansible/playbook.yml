@@ -1,0 +1,8 @@
+---
+- name: "Kubernetes the hard way with vagrant and ansible setup"
+  hosts: masters
+  become: yes
+  gather_facts: true
+
+  roles:
+  - etcd
