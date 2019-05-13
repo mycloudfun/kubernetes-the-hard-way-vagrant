@@ -47,9 +47,9 @@
       path: /etc/nginx/conf.d/k8s.conf
       block: |
         upstream api.k8s.local {
-          server master1.k8s.local;
-          server master2.k8s.local;
-          server master3.k8s.local;
+            server master1.k8s.local:6443;
+            server master2.k8s.local:6443;
+            server master3.k8s.local:6443;
         }
 
         server {

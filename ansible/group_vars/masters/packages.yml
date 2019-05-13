@@ -1,3 +1,9 @@
+kubernetes_version: v1.12.0
 etcd_package: etcd-v3.3.9-linux-amd64
 etcd_package_tar: "{{ etcd_package }}.tar.gz"
 etcd_package_url: "https://github.com/coreos/etcd/releases/download/v3.3.9/{{ etcd_package_tar }}"
+
+kube_apiserver_url: "https://storage.googleapis.com/kubernetes-release/release/{{ kubernetes_version }}/bin/linux/amd64/kube-apiserver"
+kube_controller_manager_url: "https://storage.googleapis.com/kubernetes-release/release/{{ kubernetes_version }}/bin/linux/amd64/kube-controller-manager"
+kube_scheduler_url: "https://storage.googleapis.com/kubernetes-release/release/{{ kubernetes_version }}/bin/linux/amd64/kube-scheduler"
+kubectl_url: "https://storage.googleapis.com/kubernetes-release/release/{{ kubernetes_version }}/bin/linux/amd64/kubectl"

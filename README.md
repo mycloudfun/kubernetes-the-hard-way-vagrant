@@ -125,8 +125,7 @@ done
 Run the **setup_encryption.sh** script in **scripts** folder to create the encryption key and configuration. Make sure you run this scrip from the encryption folder
 
 ```bash
-cd script/encryption
-./setup.sh
+./setup_encryption.sh
 ```
 
 Next copy the produced files to Master instances:
@@ -139,12 +138,12 @@ done
 
 ### Step 7 Bootstrapping the etcd Cluster
 
-IMPORTANT! Ansible playbook expects that desired files and certificates created in previous steps are available under **/home/vagrant** folder in nodes. Make sure you successfully completed it, otherwisei, the setup will fail.
+> **IMPORTANT!** Ansible playbook expects that desired files and certificates created in previous steps are available under **/home/vagrant** folder in nodes. Make sure you successfully completed it, otherwisei, the setup will fail.
 
 Start the ansible playbook to configure the ETCD cluster:
 
 ```bash
-ansible-playbook ansible/playbook.yml -i ansible/inventory --key-file key
+ansible-playbook ansible/etcd-cluster.yml -i ansible/inventory --key-file key
 ```
 
 Above command will create ETCD cluster and start it. You can validate the status, by executing below command on one of the master nodes:
@@ -165,3 +164,51 @@ It should produce the output similar to one below:
 49c039455b52a82e, started, master1, https://10.0.0.20:2380, https://10.0.0.20:2379
 d39138844daf67cb, started, master2, https://10.0.0.21:2380, https://10.0.0.21:2379
 ```
+
+### Step 8 Bootstrapping the Kubernetes Control Plane
+
+> **IMPORTANT!** Ansible playbook expects that desired files and certificates created in previous steps are available under **/home/vagrant** folder in nodes. Make sure you successfully completed it.otherwise the setup will fail.
+
+Start the Ansible playbook to configure control plane of Kubernetes cluster:
+
+```bash
+ansible-playbook ansible/control-plane.yml -i ansible/inventory --key-file key
+```
+
+After few moments, check if the control plane is operational by typping below command:
+
+```bash
+vagrant ssh master1
+kubectl get componentstatuses --kubeconfig admin.kubeconfig
+```
+
+You should get the output similar to one below:
+
+```bash
+[vagrant@master1 ~]$ kubectl get componentstatuses --kubeconfig admin.kubeconfig
+NAME                 STATUS    MESSAGE             ERROR
+scheduler            Healthy   ok
+controller-manager   Healthy   ok
+etcd-2               Healthy   {"health":"true"}
+etcd-1               Healthy   {"health":"true"}
+etcd-0               Healthy   {"health":"true"}
+```
+
+You can use another test to validate if nginx load balancer is operational:
+
+```bash
+curl -k --cacert scripts/ca.pem  http://api.k8s.local:6443/version
+{
+  "major": "1",
+  "minor": "12",
+  "gitVersion": "v1.12.0",
+  "gitCommit": "0ed33881dc4355495f623c6f22e7dd0b7632b7c0",
+  "gitTreeState": "clean",
+  "buildDate": "2018-09-27T16:55:41Z",
+  "goVersion": "go1.10.4",
+  "compiler": "gc",
+  "platform": "linux/amd64"
+}
+```
+
+

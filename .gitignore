@@ -3,6 +3,7 @@
 *.json
 *.csr
 *.kubeconfig
+*.retry
 encryption-config.yaml
 key
 key.pub

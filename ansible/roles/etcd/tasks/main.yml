@@ -14,8 +14,8 @@
     path: "/tmp/{{ etcd_package }}"
   register: etcd_files
 
-- name: "Move etcd binaries tp /usr/local/bin"
-  shell: "mv /tmp/{{ etcd_package }}/etcd* /usr/local/bin/"
+- name: "Copy etcd binaries tp /usr/local/bin"
+  shell: "cp -rf /tmp/{{ etcd_package }}/etcd* /usr/local/bin/"
   when: etcd_files.stat.exists
 
 - name: "Create etcd directories"
@@ -28,8 +28,8 @@
     - /etc/etcd
     - /var/lib/etcd
 
-- name: "Move certificates files to etcd folder"
-  shell: "mv /home/vagrant/ca.pem kubernetes-key.pem kubernetes.pem /etc/etcd/"
+- name: "Copy certificates files to etcd folder"
+  shell: "cp -rp /home/vagrant/ca.pem kubernetes-key.pem kubernetes.pem /etc/etcd/"
   ignore_errors: yes
 
 - name: "Create etcd.service file"

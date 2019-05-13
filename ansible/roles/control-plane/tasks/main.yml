@@ -1,0 +1,71 @@
+- name: "Create required directories"
+  file:
+    path: "{{ item }}"
+    owner: root
+    group: root
+    state: directory
+  with_items:
+    - /etc/kubernetes/config
+    - /var/lib/kubernetes
+
+- name: "Download kubernetes controller binaries"
+  get_url:
+    url: "{{ item }}"
+    dest: /usr/local/bin/
+    mode: u+x,g+x,o+x
+  with_items:
+    - "{{ kube_apiserver_url }}"
+    - "{{ kube_controller_manager_url }}"
+    - "{{ kube_scheduler_url }}"
+    - "{{ kubectl_url }}"
+
+- name: "Copy certificates to kubernetes directory"
+  shell: "cp -rp /home/vagrant/{{ item }} /var/lib/kubernetes/"
+  ignore_errors: yes
+  with_items:
+    - ca.pem
+    - ca-key.pem
+    - kubernetes-key.pem
+    - kubernetes.pem
+    - service-account-key.pem
+    - service-account.pem
+    - encryption-config.yaml
+    - kube-scheduler.kubeconfig
+    - kube-controller-manager.kubeconfig
+
+- name: "Create kube-apiserver, kube-controller-manager, kube-scheduler service files"
+  template:
+    src: "{{ item }}"
+    dest: "/etc/systemd/system/{{ item }}"
+    owner: root
+    group: root
+  with_items:
+    - kube-apiserver.service
+    - kube-controller-manager.service
+    - kube-scheduler.service
+
+- name: "Create kube-scheduler.yaml file"
+  template:
+    src: "kube-scheduler.yaml"
+    dest: "/etc/kubernetes/config/kube-scheduler.yaml"
+    owner: root
+    group: root
+
+- name: "Enable kube-apiserver, kube-controller-manager, kube-scheduler services"
+  service:
+    name: "{{ item }}"
+    enabled: true
+  with_items:
+    - kube-apiserver
+    - kube-controller-manager
+    - kube-scheduler
+
+- name: "Start kube-apiserver, kube-controller-manager, kube-scheduler services"
+  service:
+    name: "{{ item }}"
+    state: restarted
+  with_items:
+    - kube-apiserver
+    - kube-controller-manager
+    - kube-scheduler
+
