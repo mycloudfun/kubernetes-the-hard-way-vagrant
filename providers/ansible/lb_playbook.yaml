@@ -29,47 +29,28 @@
       state: latest
       update_cache: yes
 
-  - name: "Install nginx"
+  - name: "Install haproxy"
     yum:
-      name: nginx
+      name: haproxy
       state: latest
       update_cache: yes
 
-  - name: "Nginx configuration file"
-    file:
-      path: /etc/nginx/conf.d/k8s.conf
+  - name: "Configure haproxy"
+    template:
+      src: haproxy.cfg
+      path: /etc/haproxy/haproxy.cfg
       owner: root
       group: root
-      state: touch
 
-  - name: "Nginx configuration"
-    blockinfile:
-      path: /etc/nginx/conf.d/k8s.conf
-      block: |
-        upstream api.k8s.local {
-            server master1.k8s.local:6443;
-            server master2.k8s.local:6443;
-            server master3.k8s.local:6443;
-        }
+  - name: "Create /run/haproxy directory"
+    file:
+      path: /run/haproxy
+      owner: root
+      group: root
+      state: directory
 
-        server {
-          listen 6443;
-          
-          location / {
-            proxy_pass https://api.k8s.local;
-          }
-        }
-
-  - name: "Allow Nginx to listen on TCP port 6443"
-    seport:
-      ports: 6443
-      proto: tcp
-      setype: http_port_t
-      state: present
-
-  - name: "Start and enable Nginx service"
+  - name: "Start haproxy service"
     service:
-      name: nginx
-      state: started
+      name: haproxy
+      status: restarted
       enabled: yes
-

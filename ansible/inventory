@@ -1,8 +1,8 @@
 [masters]
-master1.k8s.local etcd_hostname=master1
-master2.k8s.local etcd_hostname=master2
-master3.k8s.local etcd_hostname=master3
+master1.k8s.local 
+master2.k8s.local
+master3.k8s.local
 
 [workers]
-worker1.k8s.local
-worker2.k8s.local
+worker1.k8s.local pod_cidr=10.200.1.0/24 hostname=worker1
+worker2.k8s.local pod_cidr=10.200.2.0/24 hostname=worker2

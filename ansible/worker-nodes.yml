@@ -1,0 +1,8 @@
+---
+- name: "Kubernetes workers nodes setup"
+  hosts: workers
+  become: yes
+  gather_facts: true
+
+  roles:
+  - worker-nodes

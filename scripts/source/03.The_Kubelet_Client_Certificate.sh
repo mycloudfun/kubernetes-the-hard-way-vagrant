@@ -5,7 +5,7 @@ declare -A workers=( ["worker1"]="10.0.0.30" ["worker2"]="10.0.0.31" )
 for instance in "${!workers[@]}"; do
 cat > $instance-csr.json <<EOF
 {
-  "CN": "system:node:$instance",
+  "CN": "system:node:$instance.k8s.local",
   "key": {
     "algo": "rsa",
     "size": 2048
