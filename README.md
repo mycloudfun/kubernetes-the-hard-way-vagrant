@@ -149,12 +149,12 @@ ansible-playbook ansible/etcd-cluster.yml -i ansible/inventory --key-file key
 Above command will create ETCD cluster and start it. You can validate the status, by executing below command on one of the master nodes:
 
 ```bash
-vagrant ssh master1
+vagrant ssh master1 -c "
 sudo ETCDCTL_API=3 /usr/local/bin/etcdctl member list \
   --endpoints=https://127.0.0.1:2379 \
   --cacert=/etc/etcd/ca.pem \
   --cert=/etc/etcd/kubernetes.pem \
-  --key=/etc/etcd/kubernetes-key.pem
+  --key=/etc/etcd/kubernetes-key.pem"
 ```
 
 It should produce the output similar to one below:
@@ -178,14 +178,12 @@ ansible-playbook ansible/control-plane.yml -i ansible/inventory --key-file key
 After few moments, check if the control plane is operational by typping below command:
 
 ```bash
-vagrant ssh master1
-kubectl get componentstatuses --kubeconfig admin.kubeconfig
+vagrant ssh master1 -c "kubectl get componentstatuses --kubeconfig admin.kubeconfig"
 ```
 
 You should get the output similar to one below:
 
 ```bash
-[vagrant@master1 ~]$ kubectl get componentstatuses --kubeconfig admin.kubeconfig
 NAME                 STATUS    MESSAGE             ERROR
 scheduler            Healthy   ok
 controller-manager   Healthy   ok
@@ -211,6 +209,22 @@ curl -k --cacert scripts/ca.pem  https://api.k8s.local:6443/version
 }
 ```
 
+**RBAC for Kubelet**
+
+In order to allow Kubernetes API Server to access the Kubelet API, you need to create the ClusterRole and ClusterRoleBinding. Simply run below commands to configure it:
+
+```bash
+vagrant scp scripts/kubelet-rbac-authorization.sh master1:~/
+vagrant ssh master1 -c "~/kubelet-rbac-authorization.sh"
+```
+
+You will get such output:
+
+```bash
+clusterrole.rbac.authorization.k8s.io/system:kube-apiserver-to-kubelet created
+clusterrolebinding.rbac.authorization.k8s.io/system:kube-apiserver created
+```
+
 ### Step 9 Bootstrapping the Kubernetes Worker Nodes
 
 > **IMPORTANT!** Ansible playbook expects that desired files and certificates created in previous steps are available under /home/vagrant folder in nodes. Make sure you successfully completed it.otherwise the setup will fail.
@@ -224,14 +238,12 @@ ansible-playbook ansible/worker-nodes.yml -i ansible/inventory --key-file key
 Once finished, run below commands to validate the status of worker nodes:
 
 ```bash
-vagrant ssh master1
-kubectl get nodes --kubeconfig admin.kubeconfig
+vagrant ssh master1 -c "kubectl get nodes --kubeconfig admin.kubeconfig"
 ```
 
 You should get the output similar to the one below:
 
 ```bash
-[vagrant@master1 ~]$ kubectl get nodes --kubeconfig admin.kubeconfig
 NAME      STATUS   ROLES    AGE    VERSION
 worker1   Ready    <none>   12m    v1.12.0
 worker2   Ready    <none>   107s   v1.12.0
@@ -251,6 +263,24 @@ Once completed, your kubectl is ready to connect to the API. Run below set of co
 ```bash
 kubectl get componentstatuses
 kubectl get nodes
+```
+
+### Step 11 Provision Pod network routes
+
+To configure POD network routes accros the nodes, run below ansible script:
+
+```bash
+ansible-playbook ansible/pod_network.yml -i ansible/inventory --key-file key
+```
+
+It will install and configure necessary routes.
+
+### Step 12 Deploying the DNS Cluster Add-on
+
+Finally, deploy the DNS Cluster Add-on to the cluster:
+
+```bash
+kubectl apply -f https://storage.googleapis.com/kubernetes-the-hard-way/coredns.yaml
 ```
 
 
