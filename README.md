@@ -138,7 +138,7 @@ done
 
 ### Step 7 Bootstrapping the etcd Cluster
 
-> **IMPORTANT!** Ansible playbook expects that desired files and certificates created in previous steps are available under **/home/vagrant** folder in nodes. Make sure you successfully completed it, otherwisei, the setup will fail.
+> **IMPORTANT!** Ansible playbook expects that desired files and certificates created in previous steps are available under /home/vagrant folder in nodes. Make sure you successfully completed it, otherwise, the setup will fail.
 
 Start the ansible playbook to configure the ETCD cluster:
 
@@ -167,7 +167,7 @@ d39138844daf67cb, started, master2, https://10.0.0.21:2380, https://10.0.0.21:23
 
 ### Step 8 Bootstrapping the Kubernetes Control Plane
 
-> **IMPORTANT!** Ansible playbook expects that desired files and certificates created in previous steps are available under **/home/vagrant** folder in nodes. Make sure you successfully completed it.otherwise the setup will fail.
+> **IMPORTANT!** Ansible playbook expects that desired files and certificates created in previous steps are available under /home/vagrant folder in nodes. Make sure you successfully completed it.otherwise the setup will fail.
 
 Start the Ansible playbook to configure control plane of Kubernetes cluster:
 
@@ -197,7 +197,7 @@ etcd-0               Healthy   {"health":"true"}
 You can use another test to validate if nginx load balancer is operational:
 
 ```bash
-curl -k --cacert scripts/ca.pem  http://api.k8s.local:6443/version
+curl -k --cacert scripts/ca.pem  https://api.k8s.local:6443/version
 {
   "major": "1",
   "minor": "12",
@@ -209,6 +209,32 @@ curl -k --cacert scripts/ca.pem  http://api.k8s.local:6443/version
   "compiler": "gc",
   "platform": "linux/amd64"
 }
+```
+
+### Step 9 Bootstrapping the Kubernetes Worker Nodes
+
+> **IMPORTANT!** Ansible playbook expects that desired files and certificates created in previous steps are available under /home/vagrant folder in nodes. Make sure you successfully completed it.otherwise the setup will fail.
+
+Start the Ansible playbook to configure worker nodes of Kubernetes cluster:
+
+```bash
+ansible-playbook ansible/worker-nodes.yml -i ansible/inventory --key-file key
+```
+
+Once finished, run below commands to validate the status of worker nodes:
+
+```bash
+vagrant ssh master1
+kubectl get nodes --kubeconfig admin.kubeconfig
+```
+
+You should get the output similar to the one below:
+
+```bash
+[vagrant@master1 ~]$ kubectl get nodes --kubeconfig admin.kubeconfig
+NAME      STATUS   ROLES    AGE    VERSION
+worker1   Ready    <none>   12m    v1.12.0
+worker2   Ready    <none>   107s   v1.12.0
 ```
 
 
