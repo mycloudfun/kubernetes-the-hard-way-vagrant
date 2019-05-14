@@ -2,6 +2,12 @@
 
 This is a port of Kelsey Hightower project called [Kubernetes the hard way](https://github.com/kelseyhightower/kubernetes-the-hard-way), originally created for GCP. The aim of this project is to build a similar setup, but based on well-known product Vagrant. It allows you to build your own Kubernetes cluster for learning purposes without access to any public cloud provides. The only limit is your PC Hardware :)
 
+## Introduction
+
+The setup describes here is not fully automated, because the original idea was to create the Kubernetes cluster with the hardest possible way. In opposite to the original project, some of the tasks described here automate the work. But the original idea has been kept. 
+
+Simply follow the steps described below to build your own Kubernetes cluster. If you are interested in how it works, feel free to read the scripts / ansible playbooks (requires minimal knowledge about BASH and Ansible).
+
 ### Differences with the Kelsey version
 
 * Uses Vagrant instead of GCP as an infrastructure
@@ -10,10 +16,10 @@ This is a port of Kelsey Hightower project called [Kubernetes the hard way](http
 
 ## Prerequisites
 
-* Installed Vagrant (validated on v2.2.4)
-* Installed Ansible
-* Installed Virtualbox
-* Entries in your /etc/hosts
+* Installed Vagrant (tested on v2.2.4)
+* Installed Ansible (tested on v2.7.8)
+* Installed Virtualbox (tested on v.6.0.6_Ubuntu)
+* Entries in your local PC /etc/hosts
 
 ```bash
 10.0.0.10 api.k8s.local
@@ -64,7 +70,7 @@ cd scripts/
 ./setup_certs.sh
 ```
 
-Next copy the produced certificates to master's and worker's nodes. I suggest you to use vagrant-scp plugin.
+Next copy produced certificates to master's and worker's nodes. I suggest you use vagrant-scp plugin.
 
 ```bash
 vagrant plugin install vagrant-scp
@@ -95,13 +101,13 @@ done
 
 ### Step 05 - Generating Kubernetes Configuration Files for Authentication
 
-Run the **setup_kubeconfigs.sh** script in **scripts** folder to create all the required configuration files. Make sure you run this scrip from the kubeconfigs folder
+Run the **setup_kubeconfigs.sh** script in **scripts** folder to create all the required configuration files.
 
 ```bash
 ./setup_kubeconfigs.sh
 ```
 
-Next copy the produced files to Worker instances:
+Next copy produced files to worker instances:
 
 ```bash
 for instance in worker1 worker2; do
@@ -110,7 +116,7 @@ for instance in worker1 worker2; do
 done
 ```
 
-and Master instances:
+and master instances:
 
 ```bash
 for instance in master1 master2 master3; do
@@ -122,13 +128,13 @@ done
 
 ### Step 6 Generating the Data Encryption Config and Key
 
-Run the **setup_encryption.sh** script in **scripts** folder to create the encryption key and configuration. Make sure you run this scrip from the encryption folder
+Run the **setup_encryption.sh** script in **scripts** folder to create the encryption key and configuration.
 
 ```bash
 ./setup_encryption.sh
 ```
 
-Next copy the produced files to Master instances:
+Next copy produced files to Master instances:
 
 ```bash
 for instance in master1 master2 master3; do
@@ -283,4 +289,33 @@ Finally, deploy the DNS Cluster Add-on to the cluster:
 kubectl apply -f https://storage.googleapis.com/kubernetes-the-hard-way/coredns.yaml
 ```
 
+Now you can run a small tests to check if the service is operational:
 
+```bash
+# Create a busybox deployment:
+kubectl run busybox --image=busybox:1.28 --command -- sleep 3600
+
+# List the pod created by the busybox deployment:
+kubectl get pods -l run=busybox
+
+# Retrive the full name of the busybox pod:
+POD_NAME=$(kubectl get pods -l run=busybox -o jsonpath="{.items[0].metadata.name}")
+
+# Execute a DNS lookup for the kubernetes service inside the busybox pod:
+kubectl exec -ti $POD_NAME -- nslookup kubernetes
+
+# Expected output:
+Server:    10.32.0.10
+Address 1: 10.32.0.10 kube-dns.kube-system.svc.cluster.local
+
+Name:      kubernetes
+Address 1: 10.32.0.1 kubernetes.default.svc.cluster.local
+```
+
+## Lab cleanup
+
+This command will destroy all the resources created during this lab:
+
+```bash
+vagrant destroy
+```

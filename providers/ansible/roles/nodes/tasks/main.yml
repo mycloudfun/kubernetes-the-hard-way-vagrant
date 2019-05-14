@@ -1,0 +1,35 @@
+- name: "Disable selinux"
+  selinux:
+    state: disabled
+  register: selinux
+
+- name: "Reboot the server if selinux has been changed"
+  reboot:
+  when: selinux.changed
+
+- name: "Create directory under /run/systemd/resolve"
+  file:
+    path: /run/systemd/resolve
+    state: directory
+
+- name: "Set symlink to /etc/resolv.conf"
+  file:
+    src: /etc/resolv.conf
+    dest: /run/systemd/resolve/resolv.conf
+    state: link
+
+- name: "Disable SWAP since kubernetes can't work with swap enabled (1/2)"
+  shell: |
+    swapoff -a
+
+- name: "Disable SWAP in fstab since kubernetes can't work with swap enabled (2/2)"
+  replace:
+    path: /etc/fstab
+    regexp: '^(.+?\sswap\s+sw\s+.*)$'
+    replace: '# \1'
+
+    #- name: "Enable Bridge-netfilter to allow cni communication"
+    #  sysctl:
+    #    name: net.bridge.bridge-nf-call-iptables
+    #    state: present
+    #    value: 1

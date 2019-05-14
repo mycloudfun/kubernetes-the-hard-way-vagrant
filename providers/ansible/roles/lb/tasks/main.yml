@@ -1,0 +1,38 @@
+- name: "Install required packages"
+  yum:
+    name: ['epel-release','policycoreutils-python']
+    state: latest
+    update_cache: yes
+
+- name: "Install haproxy"
+  yum:
+    name: haproxy
+    state: latest
+    update_cache: yes
+
+- name: "Configure haproxy"
+  template:
+    src: haproxy.cfg.j2
+    dest: /etc/haproxy/haproxy.cfg
+    owner: root
+    group: root
+
+- name: "Create /run/haproxy directory"
+  file:
+    path: /run/haproxy
+    owner: root
+    group: root
+    state: directory
+
+- name: "Allow haproxy to listen to on TCP port 6443"
+  seport:
+    ports: 6443
+    proto: tcp
+    setype: http_port_t
+    state: present
+
+- name: "Enabled haproxy service"
+  service:
+    name: haproxy
+    enabled: yes
+    state: restarted

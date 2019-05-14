@@ -1,0 +1,17 @@
+- name: "Setup /etc/hosts"
+  blockinfile:
+    path: /etc/hosts
+    marker: "<!-- {mark} ANSIBLE MANAGED BLOCK -->"
+    block: |
+      10.0.0.10 lb lb.k8s.local
+      10.0.0.20 master1 master1.k8s.local
+      10.0.0.21 master2 master2.k8s.local
+      10.0.0.22 master3 master3.k8s.local
+      10.0.0.30 worker1 worker1.k8s.local
+      10.0.0.31 worker2 worker2.k8s.local
+
+- name: "Set authorized key for user Vagrant"
+  authorized_key:
+    user: vagrant
+    state: present
+    key: "{{ lookup('file', '../../key.pub') }}"
