@@ -1,0 +1,12 @@
+- name: "Configure static routes"
+  template:
+    src: route-eth1
+    dest: /etc/sysconfig/network-scripts/route-eth1
+    owner: root
+    group: root
+    mode: 755
+
+- name: "Install static routes"
+  service:
+    name: network
+    state: restarted

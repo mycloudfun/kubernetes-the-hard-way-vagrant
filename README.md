@@ -237,4 +237,20 @@ worker1   Ready    <none>   12m    v1.12.0
 worker2   Ready    <none>   107s   v1.12.0
 ```
 
+### Step 10 Configuring kubectl for Remote Access
+
+Run below script to generate kubectl for access the Kubernetes API:
+
+```bash
+cd scripts/
+./setup_kubectl.sh
+```
+
+Once completed, your kubectl is ready to connect to the API. Run below set of commands to verify it:
+
+```bash
+kubectl get componentstatuses
+kubectl get nodes
+```
+
 

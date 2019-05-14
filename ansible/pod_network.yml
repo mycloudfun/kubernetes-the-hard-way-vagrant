@@ -1,0 +1,8 @@
+---
+- name: "Setup pod routes to kubernetes cluster members"
+  hosts: all
+  gather_facts: yes
+  become: yes
+
+  roles:
+    - pod-network

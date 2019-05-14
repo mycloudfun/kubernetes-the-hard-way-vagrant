@@ -13,7 +13,6 @@ ExecStart=/usr/local/bin/kubelet \
   --kubeconfig=/var/lib/kubelet/kubeconfig \
   --network-plugin=cni \
   --register-node=true \
-  --hostname-override={{ hostname }} \
   --v=2
 Restart=on-failure
 RestartSec=5

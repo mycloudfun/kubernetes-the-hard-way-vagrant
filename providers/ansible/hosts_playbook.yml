@@ -6,6 +6,15 @@
 
   tasks:
 
+  - name: "Disable selinux"
+    selinux:
+      state: disabled
+    register: selinux
+
+  - name: "Reboot the server if selinux has been changed"
+    reboot:
+    when: selinux.changed
+
   - name: "Setup /etc/hosts"
     blockinfile:
       path: /etc/hosts
@@ -17,8 +26,20 @@
         10.0.0.22 master3 master3.k8s.local
         10.0.0.30 worker1 worker1.k8s.local
         10.0.0.31 worker2 worker2.k8s.local
+
   - name: "Set authorized key for user Vagrant"
     authorized_key:
       user: vagrant
       state: present
       key: "{{ lookup('file', '../../key.pub') }}"
+
+  - name: "Create directory under /run/systemd/resolve"
+    file:
+      path: /run/systemd/resolve
+      state: directory
+
+  - name: "Set symlink to /etc/resolv.conf"
+    file:
+      src: /etc/resolv.conf
+      dest: /run/systemd/resolve/resolv.conf
+      state: link

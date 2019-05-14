@@ -49,8 +49,15 @@
       group: root
       state: directory
 
+  - name: "Allow haproxy to listen to on TCP port 6443"
+    seport:
+      ports: 6443
+      proto: tcp
+      setype: http_port_t
+      state: present
+
   - name: "Enabled haproxy service"
     service:
       name: haproxy
       enabled: yes
-      state: started
+      state: restarted
