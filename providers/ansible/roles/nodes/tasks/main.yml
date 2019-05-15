@@ -28,8 +28,14 @@
     regexp: '^(.+?\sswap\s+sw\s+.*)$'
     replace: '# \1'
 
-    #- name: "Enable Bridge-netfilter to allow cni communication"
-    #  sysctl:
-    #    name: net.bridge.bridge-nf-call-iptables
-    #    state: present
-    #    value: 1
+# https://gravitational.com/blog/troubleshooting-kubernetes-networking/
+- name: "Enable Bridge-netfilter kernel module"
+  modprobe:
+    name: br_netfilter
+    state: present
+
+- name: "Enable Bridge-netfilter to allow cni communication"
+  sysctl:
+    name: net.bridge.bridge-nf-call-iptables
+    state: present
+    value: 1
